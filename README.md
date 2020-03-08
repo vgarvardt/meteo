@@ -4,22 +4,22 @@
 
 Source: https://toub.es/2017/08/08/how-to-start-a-docker-container-at-boot-time/ (https://web.archive.org/web/20180831050539/https://toub.es/2017/08/08/how-to-start-a-docker-container-at-boot-time/) 
 
-Copy file `rpi-meteo` to `/etc/systemd/system/`.
+Copy file `rpi-meteo.service` to `/etc/systemd/system/`.
 
 Enable the service on boot:
 
 ```
-sudo systemctl enable rpi-meteo
+sudo systemctl enable rpi-meteo.service
 ```
 
 Check current status
 
 ```
-sudo systemctl status rpi-meteo
+sudo systemctl status rpi-meteo.service
 ```
 
 Disable the service from boot
 
 ```
-sudo systemctl disable rpi-meteo
+sudo systemctl disable rpi-meteo.service
 ```
