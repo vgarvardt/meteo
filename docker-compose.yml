@@ -5,10 +5,15 @@ services:
     ports:
       - '1883:1883'
     volumes:
-      - mosquitto-data:/mosquitto/data
-      - mosquitto-log:/mosquitto/log
+      - ./volumes/mosquitto/data:/mosquitto/data
+      - ./volumes/mosquitto/log:/mosquitto/log
       - ./resources/mosquitto.conf:/mosquitto/config/mosquitto.conf
 
-volumes:
-  mosquitto-data:
-  mosquitto-log:
+  collector:
+    build:
+      context: collector
+    depends_on:
+      - "mosquitto"
+    command: [ "consume" ]
+    environment:
+      MQTT_HOST: "tcp://mosquitto:1883"

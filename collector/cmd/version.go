@@ -16,7 +16,7 @@ func NewVersionCmd(ctx context.Context) *cobra.Command {
 		Short:   "Print the version information",
 		Aliases: []string{"v"},
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("collector %s", version)
+			fmt.Printf("collector %s\n", version)
 		},
 	}
 }
