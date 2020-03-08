@@ -2,14 +2,21 @@ package consume
 
 import (
 	"context"
+	"encoding/json"
+	"time"
 
 	"github.com/eclipse/paho.mqtt.golang"
 	wErrors "github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
-func RunConsumer(ctx context.Context, mqttClient mqtt.Client, topic string, logger *zap.Logger) error {
-	token := mqttClient.Subscribe(topic, 1, messageHandler(ctx, logger))
+type msg struct {
+	When time.Time `json:"when"`
+	Data float32   `json:"data"`
+}
+
+func RunConsumer(ctx context.Context, mqttClient mqtt.Client, topicSensors string, logger *zap.Logger) error {
+	token := mqttClient.Subscribe(topicSensors, 1, messageHandler(ctx, logger))
 	for !token.Wait() {
 		select {
 		case <-ctx.Done():
@@ -27,13 +34,23 @@ func RunConsumer(ctx context.Context, mqttClient mqtt.Client, topic string, logg
 
 func messageHandler(ctx context.Context, logger *zap.Logger) mqtt.MessageHandler {
 	return func(client mqtt.Client, message mqtt.Message) {
-		logger.Debug(
-			"Consumer received a message",
+		ll := logger.With(
 			zap.String("topic", message.Topic()),
 			zap.Int("qos", int(message.Qos())),
 			zap.Binary("payload-b", message.Payload()),
 			zap.ByteString("payload-s", message.Payload()),
 		)
+
+		ll.Debug("Consumer received a message")
+
+		var m msg
+		if err := json.Unmarshal(message.Payload(), &m); err != nil {
+			ll.Error("Could not unmarshal incoming message", zap.Error(err))
+			message.Ack()
+			return
+		}
+
+		ll.Debug("Decoded incoming message", zap.Any("msg", m))
 
 		message.Ack()
 	}

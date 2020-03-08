@@ -42,7 +42,7 @@ func NewConsumeCmd(ctx context.Context) *cobra.Command {
 
 			var consumerErr error
 			go func() {
-				consumerErr = consume.RunConsumer(ctxWithCancel, mqttClient, cfg.MQTTConfig.Topics, logger)
+				consumerErr = consume.RunConsumer(ctxWithCancel, mqttClient, cfg.MQTTConfig.TopicSensors, logger)
 			}()
 
 			osSignal := make(chan os.Signal)

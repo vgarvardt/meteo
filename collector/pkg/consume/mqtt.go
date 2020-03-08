@@ -10,9 +10,10 @@ import (
 )
 
 type MQTTConfig struct {
-	Server   string `envconfig:"MQTT_HOST" default:"tcp://127.0.0.1:1883"`
-	ClientID string `envconfig:"MQTT_CLIENT_ID" default:"meteo-collector"`
-	Topics   string `envconfig:"MQTT_TOPICS" default:"home/#"`
+	Server       string `envconfig:"MQTT_HOST" default:"tcp://127.0.0.1:1883"`
+	ClientID     string `envconfig:"MQTT_CLIENT_ID" default:"meteo-collector"`
+	TopicSensors string `envconfig:"MQTT_TOPIC_SENSORS" default:"home/#"`
+	TopicSystem  string `envconfig:"MQTT_TOPIC_SYSTEM" default:"sys/#"`
 
 	ConnectTimeout    time.Duration `envconfig:"MQTT_CONNECT_TIMEOUT" default:"3s"`
 	DisconnectTimeout time.Duration `envconfig:"MQTT_DISCONNECT_TIMEOUT" default:"3s"`
