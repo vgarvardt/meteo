@@ -15,21 +15,16 @@ type msg struct {
 	Data float32   `json:"data"`
 }
 
-func RunConsumer(ctx context.Context, mqttClient mqtt.Client, topicSensors string, logger *zap.Logger) error {
-	token := mqttClient.Subscribe(topicSensors, 1, messageHandler(ctx, logger))
+func StartConsumer(ctx context.Context, mqttClient mqtt.Client, topic string, logger *zap.Logger) error {
+	token := mqttClient.Subscribe(topic, 1, messageHandler(ctx, logger))
 	for !token.Wait() {
-		select {
-		case <-ctx.Done():
-			logger.Info("Got Done signal, quitting consumer")
-			return nil
-		}
 	}
 
 	if err := token.Error(); err != nil {
 		return wErrors.Wrap(token.Error(), "something went wrong with MQTT broker subscription")
 	}
 
-	return token.Error()
+	return nil
 }
 
 func messageHandler(ctx context.Context, logger *zap.Logger) mqtt.MessageHandler {

@@ -36,6 +36,16 @@ msgs = [
         'payload': json.dumps(dict(when=now, data=56.78)),
         'qos': QOS_AT_LEAST_ONCE,
     },
+    {
+        'topic': "sys/bedroom/la-1",
+        'payload': json.dumps(dict(when=now, data=0.00)),
+        'qos': QOS_AT_LEAST_ONCE,
+    },
+    {
+        'topic': "sys/bedroom/la-15",
+        'payload': json.dumps(dict(when=now, data=0.03)),
+        'qos': QOS_AT_LEAST_ONCE,
+    },
 ]
 
 publish.multiple(msgs, hostname='localhost', port=1883, client_id='bedroom-sense-hat')

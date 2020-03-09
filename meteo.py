@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import json
 import os
+import subprocess
 from datetime import datetime, timezone
 
 import paho.mqtt.publish as publish
@@ -62,32 +63,56 @@ aio.send_data(temp_humidity_feed.key, temp_humidity, precision=1)
 aio.send_data(temp_pressure_feed.key, temp_pressure, precision=1)
 aio.send_data(temp_feed.key, temp_avg, precision=1)
 
-msgs = [
-    {
-        'topic': "home/bedroom/humidity",
-        'payload': json.dumps(dict(when=now, data=humidity)),
-        'qos': QOS_AT_LEAST_ONCE,
-    },
-    {
-        'topic': "home/bedroom/pressure",
-        'payload': json.dumps(dict(when=now, data=pressure)),
-        'qos': QOS_AT_LEAST_ONCE,
-    },
-    {
-        'topic': "home/bedroom/temperature-h",
-        'payload': json.dumps(dict(when=now, data=temp_humidity)),
-        'qos': QOS_AT_LEAST_ONCE,
-    },
-    {
-        'topic': "home/bedroom/temperature-p",
-        'payload': json.dumps(dict(when=now, data=temp_pressure)),
-        'qos': QOS_AT_LEAST_ONCE,
-    },
-    {
-        'topic': "home/bedroom/temperature-2",
-        'payload': json.dumps(dict(when=now, data=temp_avg)),
-        'qos': QOS_AT_LEAST_ONCE,
-    },
-]
+# result.stdout = b"temp=42.9'C\n"
+result = subprocess.run(['vcgencmd', 'measure_temp'], stdout=subprocess.PIPE)
+cpu_temp = round(float(result.stdout.decode('utf-8').split("=")[1].split("'")[0]), 1)
+print("CPU temperature:", cpu_temp)
+
+# result.stdout = 0.01,0.03,0.00
+result = subprocess.run("top -b | head -n 1 | awk '{print $10 $11 $12}'", shell=True, stdout=subprocess.PIPE)
+la_1min, la_5min, la_15min = list(map(lambda x: round(float(x), 2), result.stdout.decode('utf-8').split(",")))
+print("Load average:", la_1min, la_5min, la_15min)
+
+# result.stdout = 971051 54910 797986 6471 118153 856424
+result = subprocess.run("free --kilo | grep Mem | awk '{print $2,$3,$4,$5,$6,$7}'", shell=True, stdout=subprocess.PIPE)
+mem_total_kb, mem_used_kb, mem_free_kb, mem_shared_kb, mem_cache_kb, mem_available_kb = list(
+    map(int, result.stdout.decode('utf-8').split(" ")))
+print(
+    "Memory:\n\ttotal: {0}kb\n\tused: {1}kb\n\tfree: {2}kb\n\tshared: {3}kb\n\tcache: {4}kb\n\tavailable: {5}kb".format(
+        mem_total_kb, mem_used_kb, mem_free_kb, mem_shared_kb, mem_cache_kb, mem_available_kb))
+
+# result.stdout = 7386872 1397124 5657820 20%
+result = subprocess.run("df | grep root | awk '{print $2,$3,$4,$5}'", shell=True, stdout=subprocess.PIPE)
+disk_total_kb, disk_used_kb, disk_available_kb, disk_use_prct = list(
+    map(lambda x: int(x.strip('%\n')), result.stdout.decode('utf-8').split(" ")))
+print(
+    "Disk:\n\ttotal: {0}kb\n\tused: {1}kb\n\tavailable: {2}kb\n\tuse: {3}%".format(
+        disk_total_kb, disk_used_kb, disk_available_kb, disk_use_prct))
+
+raw = {
+    "home/bedroom/humidity": humidity,
+    "home/bedroom/pressure": pressure,
+    "home/bedroom/temperature-h": temp_humidity,
+    "home/bedroom/temperature-p": temp_pressure,
+    "home/bedroom/temperature-2": temp_avg,
+    "sys/bedroom/temperature-cpu": cpu_temp,
+    "sys/bedroom/la-1min": la_1min,
+    "sys/bedroom/la-5min": la_5min,
+    "sys/bedroom/la-15min": la_15min,
+    "sys/bedroom/mem-total-kb": mem_total_kb,
+    "sys/bedroom/mem-used-kb": mem_used_kb,
+    "sys/bedroom/mem-free-kb": mem_free_kb,
+    "sys/bedroom/mem-shared-kb": mem_shared_kb,
+    "sys/bedroom/mem-cache-kb": mem_cache_kb,
+    "sys/bedroom/mem-available-kb": mem_available_kb,
+    "sys/bedroom/disk-total-kb": disk_total_kb,
+    "sys/bedroom/disk-used-kb": disk_used_kb,
+    "sys/bedroom/disk-available-kb": disk_available_kb,
+    "sys/bedroom/disk-use-prct": disk_use_prct,
+}
+
+msgs = []
+for topic, val in raw.items():
+    msgs.append(dict(topic=topic, payload=json.dumps(dict(when=now, data=val)), qos=QOS_AT_LEAST_ONCE))
 
 publish.multiple(msgs, hostname=MQTT_HOST, port=MQTT_PORT, client_id=MQTT_CLIENT_ID)

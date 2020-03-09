@@ -37,13 +37,15 @@ func NewConsumeCmd(ctx context.Context) *cobra.Command {
 			}
 			defer mqttClient.Disconnect(uint(cfg.DisconnectTimeout / time.Millisecond))
 
-			ctxWithCancel, cancel := context.WithCancel(ctx)
-			defer cancel()
+			if err := consume.StartConsumer(ctx, mqttClient, cfg.MQTTConfig.TopicSensors, logger); err != nil {
+				logger.Error("Sensors consumer subscription finished with error", zap.Error(err))
+				return err
+			}
 
-			var consumerErr error
-			go func() {
-				consumerErr = consume.RunConsumer(ctxWithCancel, mqttClient, cfg.MQTTConfig.TopicSensors, logger)
-			}()
+			if err := consume.StartConsumer(ctx, mqttClient, cfg.MQTTConfig.TopicSystem, logger); err != nil {
+				logger.Error("System consumer subscription finished with error", zap.Error(err))
+				return err
+			}
 
 			osSignal := make(chan os.Signal)
 			signal.Notify(osSignal, os.Interrupt)
@@ -53,7 +55,7 @@ func NewConsumeCmd(ctx context.Context) *cobra.Command {
 				logger.Info("Got OS signal, stopping", zap.String("signal", sig.String()))
 			}
 
-			return consumerErr
+			return nil
 		},
 	}
 }
