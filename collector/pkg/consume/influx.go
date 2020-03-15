@@ -38,6 +38,7 @@ func NewInfluxDBClient(ctx context.Context, cfg InfluxDBConfig, logger *zap.Logg
 	return &orgAwareInfluxClient{
 		org:    cfg.Org,
 		client: influx,
+		logger: logger,
 	}, nil
 }
 
@@ -64,9 +65,17 @@ func (c *loggerInfluxClient) Write(ctx context.Context, bucket, org string, m ..
 type orgAwareInfluxClient struct {
 	org    string
 	client InfluxDBClient
+	logger *zap.Logger
 }
 
 func (c *orgAwareInfluxClient) Write(ctx context.Context, bucket, org string, m ...influxdb.Metric) (n int, err error) {
+	c.logger.Debug(
+		"Writing metrics to cloud influxDB",
+		zap.String("bucket", bucket),
+		zap.String("org-param", org), zap.String("org-aware", c.org),
+		zap.Any("metrics", m),
+	)
+
 	return c.client.Write(ctx, bucket, c.org, m...)
 }
 
