@@ -110,4 +110,6 @@ for topic, val in raw.items():
         qos=QOS_AT_LEAST_ONCE),
     )
 
+print("Publishing metrics to MQTT:", msgs)
 publish.multiple(msgs, hostname=MQTT_HOST, port=MQTT_PORT, client_id=MQTT_CLIENT_ID)
+print("All done!")
