@@ -12,6 +12,7 @@ import (
 type InfluxDBConfig struct {
 	Server string `envconfig:"INFLUX_SERVER" default:"https://eu-central-1-1.aws.cloud2.influxdata.com"`
 	Token  string `envconfig:"INFLUX_TOKEN"`
+	Org    string `envconfig:"INFLUX_ORG" required:"true"`
 }
 
 type InfluxDBClient interface {
@@ -34,7 +35,10 @@ func NewInfluxDBClient(ctx context.Context, cfg InfluxDBConfig, logger *zap.Logg
 		return nil, wErrors.Wrap(err, "could not ping InfluxDB server")
 	}
 
-	return influx, nil
+	return &orgAwareInfluxClient{
+		org:    cfg.Org,
+		client: influx,
+	}, nil
 }
 
 type loggerInfluxClient struct {
@@ -54,4 +58,18 @@ func (c *loggerInfluxClient) Write(ctx context.Context, bucket, org string, m ..
 	)
 
 	return len(m), nil
+}
+
+// orgAwareInfluxClient ignores org parameter in the Write method and uses internal one
+type orgAwareInfluxClient struct {
+	org    string
+	client InfluxDBClient
+}
+
+func (c *orgAwareInfluxClient) Write(ctx context.Context, bucket, org string, m ...influxdb.Metric) (n int, err error) {
+	return c.client.Write(ctx, bucket, c.org, m...)
+}
+
+func (c *orgAwareInfluxClient) Close() error {
+	return c.client.Close()
 }

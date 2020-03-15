@@ -68,7 +68,7 @@ func messageHandler(ctx context.Context, influx InfluxDBClient, logger *zap.Logg
 			),
 		}
 
-		if _, err := influx.Write(ctx, bucket, "my-very-awesome-org", metrics...); err != nil {
+		if _, err := influx.Write(ctx, bucket, "acme", metrics...); err != nil {
 			ll.Error("Could not write metrics to influx", zap.Error(err), zap.Any("metrics", metrics))
 		}
 
