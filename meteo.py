@@ -71,7 +71,7 @@ cpu_temp = round(float(result.stdout.decode('utf-8').split("=")[1].split("'")[0]
 print("CPU temperature:", cpu_temp)
 
 # result.stdout = 0.01,0.03,0.00
-result = subprocess.run("top -b | head -n 1 | awk '{print $10 $11 $12}'", shell=True, stdout=subprocess.PIPE)
+result = subprocess.run("top -b | head -n 1 | awk '{print $12 $13 $14}'", shell=True, stdout=subprocess.PIPE)
 la_1min, la_5min, la_15min = list(map(lambda x: round(float(x), 2), result.stdout.decode('utf-8').split(",")))
 print("Load average:", la_1min, la_5min, la_15min)
 
