@@ -12,6 +12,8 @@ RUN make deps && make build
 
 FROM debian:buster-slim
 
+RUN apt-get update && apt-get install -y ca-certificates
+
 COPY --from=builder /tmp/collector/build/collector /bin/
 RUN chmod a+x /bin/collector
 
