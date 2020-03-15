@@ -19,7 +19,7 @@ type MQTTConfig struct {
 	DisconnectTimeout time.Duration `envconfig:"MQTT_DISCONNECT_TIMEOUT" default:"3s"`
 }
 
-func NewClient(cfg MQTTConfig, logger *zap.Logger) (mqtt.Client, error) {
+func NewMQTTClient(cfg MQTTConfig, logger *zap.Logger) (mqtt.Client, error) {
 	mqtt.ERROR = mqttLogger{
 		logger: logger,
 		level:  zapcore.ErrorLevel,

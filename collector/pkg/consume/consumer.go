@@ -3,20 +3,23 @@ package consume
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/eclipse/paho.mqtt.golang"
+	"github.com/influxdata/influxdb-client-go"
 	wErrors "github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
 type msg struct {
-	When time.Time `json:"when"`
-	Data float32   `json:"data"`
+	When          time.Time              `json:"when"`
+	Data          map[string]interface{} `json:"data"`
+	MeasurementID string                 `json:"measurement_id"`
 }
 
-func StartConsumer(ctx context.Context, mqttClient mqtt.Client, topic string, logger *zap.Logger) error {
-	token := mqttClient.Subscribe(topic, 1, messageHandler(ctx, logger))
+func StartConsumer(ctx context.Context, mqttClient mqtt.Client, influx InfluxDBClient, topic string, logger *zap.Logger) error {
+	token := mqttClient.Subscribe(topic, 1, messageHandler(ctx, influx, logger))
 	for !token.Wait() {
 	}
 
@@ -27,7 +30,7 @@ func StartConsumer(ctx context.Context, mqttClient mqtt.Client, topic string, lo
 	return nil
 }
 
-func messageHandler(ctx context.Context, logger *zap.Logger) mqtt.MessageHandler {
+func messageHandler(ctx context.Context, influx InfluxDBClient, logger *zap.Logger) mqtt.MessageHandler {
 	return func(client mqtt.Client, message mqtt.Message) {
 		ll := logger.With(
 			zap.String("topic", message.Topic()),
@@ -46,6 +49,28 @@ func messageHandler(ctx context.Context, logger *zap.Logger) mqtt.MessageHandler
 		}
 
 		ll.Debug("Decoded incoming message", zap.Any("msg", m))
+
+		topicParts := strings.Split(message.Topic(), "/")
+		if len(topicParts) != 3 {
+			ll.Error("Invalid message topic format, expected <bucket>/<room>/<metricName>", zap.String("topic", message.Topic()))
+			message.Ack()
+			return
+		}
+
+		bucket, room, metricName := topicParts[0], topicParts[1], topicParts[2]
+
+		metrics := []influxdb.Metric{
+			influxdb.NewRowMetric(
+				m.Data,
+				metricName,
+				map[string]string{"room": room},
+				m.When,
+			),
+		}
+
+		if _, err := influx.Write(ctx, bucket, "my-very-awesome-org", metrics...); err != nil {
+			ll.Error("Could not write metrics to influx", zap.Error(err), zap.Any("metrics", metrics))
+		}
 
 		message.Ack()
 	}

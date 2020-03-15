@@ -31,18 +31,28 @@ func NewConsumeCmd(ctx context.Context) *cobra.Command {
 				return wErrors.Wrap(err, "could not build logger instance")
 			}
 
-			mqttClient, err := consume.NewClient(cfg.MQTTConfig, logger)
+			mqttClient, err := consume.NewMQTTClient(cfg.MQTTConfig, logger)
 			if err != nil {
 				return wErrors.Wrap(err, "could not connect to MQTT broker")
 			}
 			defer mqttClient.Disconnect(uint(cfg.DisconnectTimeout / time.Millisecond))
 
-			if err := consume.StartConsumer(ctx, mqttClient, cfg.MQTTConfig.TopicSensors, logger); err != nil {
+			influx, err := consume.NewInfluxDBClient(ctx, cfg.InfluxDBConfig, logger)
+			if err != nil {
+				return wErrors.Wrap(err, "could not connect to InfluxDB broker")
+			}
+			defer func() {
+				if err := influx.Close(); err != nil {
+					logger.Error("Something went wrong when tried to close influx connection")
+				}
+			}()
+
+			if err := consume.StartConsumer(ctx, mqttClient, influx, cfg.MQTTConfig.TopicSensors, logger); err != nil {
 				logger.Error("Sensors consumer subscription finished with error", zap.Error(err))
 				return err
 			}
 
-			if err := consume.StartConsumer(ctx, mqttClient, cfg.MQTTConfig.TopicSystem, logger); err != nil {
+			if err := consume.StartConsumer(ctx, mqttClient, influx, cfg.MQTTConfig.TopicSystem, logger); err != nil {
 				logger.Error("System consumer subscription finished with error", zap.Error(err))
 				return err
 			}

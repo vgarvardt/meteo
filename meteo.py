@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import hashlib
 import json
 import os
 import subprocess
@@ -22,6 +23,7 @@ QOS_AT_LEAST_ONCE = 1
 QOS_EXACTLY_ONCE = 2
 
 now = datetime.now(timezone.utc).astimezone().isoformat()
+measurement_id = hashlib.sha256(now.encode('utf-8')).hexdigest()
 
 # Create an instance of the REST client.
 aio = Client(ADAFRUIT_IO_USERNAME, ADAFRUIT_IO_KEY)
@@ -90,29 +92,22 @@ print(
         disk_total_kb, disk_used_kb, disk_available_kb, disk_use_prct))
 
 raw = {
-    "home/bedroom/humidity": humidity,
-    "home/bedroom/pressure": pressure,
-    "home/bedroom/temperature-h": temp_humidity,
-    "home/bedroom/temperature-p": temp_pressure,
-    "home/bedroom/temperature-2": temp_avg,
-    "sys/bedroom/temperature-cpu": cpu_temp,
-    "sys/bedroom/la-1min": la_1min,
-    "sys/bedroom/la-5min": la_5min,
-    "sys/bedroom/la-15min": la_15min,
-    "sys/bedroom/mem-total-kb": mem_total_kb,
-    "sys/bedroom/mem-used-kb": mem_used_kb,
-    "sys/bedroom/mem-free-kb": mem_free_kb,
-    "sys/bedroom/mem-shared-kb": mem_shared_kb,
-    "sys/bedroom/mem-cache-kb": mem_cache_kb,
-    "sys/bedroom/mem-available-kb": mem_available_kb,
-    "sys/bedroom/disk-total-kb": disk_total_kb,
-    "sys/bedroom/disk-used-kb": disk_used_kb,
-    "sys/bedroom/disk-available-kb": disk_available_kb,
-    "sys/bedroom/disk-use-prct": disk_use_prct,
+    "home/bedroom/climate": dict(humidity=humidity, pressure=pressure, temp_humidity=temp_humidity,
+                                 temp_pressure=temp_pressure, temp_avg=temp_avg),
+    "sys/bedroom/temperature": dict(cpu=cpu_temp),
+    "sys/bedroom/la": dict(min1=la_1min, min5=la_5min, min15=la_15min),
+    "sys/bedroom/mem": dict(total_kb=mem_total_kb, used_kb=mem_used_kb, free_kb=mem_free_kb, shared_kb=mem_shared_kb,
+                            cache_kb=mem_cache_kb, available_kb=mem_available_kb),
+    "sys/bedroom/disk": dict(total_kb=disk_total_kb, used_kb=disk_used_kb, available_kb=disk_available_kb,
+                             use_prct=disk_use_prct),
 }
 
 msgs = []
 for topic, val in raw.items():
-    msgs.append(dict(topic=topic, payload=json.dumps(dict(when=now, data=val)), qos=QOS_AT_LEAST_ONCE))
+    msgs.append(dict(
+        topic=topic,
+        payload=json.dumps(dict(when=now, data=val, measurement_id=measurement_id)),
+        qos=QOS_AT_LEAST_ONCE),
+    )
 
 publish.multiple(msgs, hostname=MQTT_HOST, port=MQTT_PORT, client_id=MQTT_CLIENT_ID)
