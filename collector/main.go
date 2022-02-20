@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 
 	"github.com/vgarvardt/meteo/collector/cmd"
@@ -9,7 +10,8 @@ import (
 func main() {
 	rootCmd := cmd.NewRootCmd()
 
-	err := rootCmd.Execute()
+	ctx := context.Background()
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

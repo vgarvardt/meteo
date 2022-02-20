@@ -4,6 +4,5 @@ import "github.com/vgarvardt/meteo/collector/pkg/core"
 
 type Config struct {
 	MQTTConfig
-	InfluxDBConfig
 	core.LoggerConfig
 }

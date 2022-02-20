@@ -1,22 +1,18 @@
 package cmd
 
-import (
-	"context"
+import "github.com/spf13/cobra"
 
-	"github.com/spf13/cobra"
-)
+var version = "0.0.0-dev"
 
 // NewRootCmd creates the root collector command
 func NewRootCmd() *cobra.Command {
-	ctx := context.Background()
-
 	cmd := &cobra.Command{
-		Use:   "collector",
-		Short: "Collector is the meteo kit utility that collects data published by sensors and propagates it to metrics storage",
+		Use:     "collector",
+		Short:   "Collector is the meteo kit utility that collects data published by sensors and propagates it to metrics storage",
+		Version: version,
 	}
 
-	cmd.AddCommand(NewVersionCmd(ctx))
-	cmd.AddCommand(NewConsumeCmd(ctx))
+	cmd.AddCommand(NewConsumeCmd())
 
 	return cmd
 }

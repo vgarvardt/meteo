@@ -22,23 +22,16 @@ OK_COLOR=\033[32;01m
 ERROR_COLOR=\033[31;01m
 WARN_COLOR=\033[33;01m
 
-.PHONY: all clean deps build
+.PHONY: all build
 
-all: clean deps build
-
-# Install dependencies
-deps:
-	git config --global http.https://gopkg.in.followRedirects true
-
-	@printf "$(OK_COLOR)==> Installing dependencies$(NO_COLOR)\n"
-	@go mod vendor
+all: build
 
 # Builds the project
 build:
 	@mkdir -p ${BUILD_DIR}
 
 	@echo "$(OK_COLOR)==> Building... $(NO_COLOR)"
-	@CGO_ENABLED=0 go build -mod vendor $(GO_LINKER_FLAGS) -o "$(BUILD_DIR)/$(NAME)"
+	@CGO_ENABLED=0 go build $(GO_LINKER_FLAGS) -o "$(BUILD_DIR)/$(NAME)"
 
 test-unit:
 	@printf "$(OK_COLOR)==> Running unit tests$(NO_COLOR)\n"
@@ -47,9 +40,3 @@ test-unit:
 test-integration:
 	@printf "$(OK_COLOR)==> Running all tests$(NO_COLOR)\n"
 	@CGO_ENABLED=0 go test -cover ./... -coverprofile=coverage.txt -covermode=atomic
-
-
-# Cleans our project: deletes binaries
-clean:
-	@printf "$(OK_COLOR)==> Cleaning project$(NO_COLOR)\n"
-	@if [ -d ${BUILD_DIR} ] ; then rm -rf ${BUILD_DIR}/* ; fi

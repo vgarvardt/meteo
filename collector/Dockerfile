@@ -20,4 +20,4 @@ RUN chmod a+x /bin/collector
 ENTRYPOINT ["/bin/collector"]
 
 # just to have it
-RUN ["/bin/collector", "version"]
+RUN ["/bin/collector", "--version"]
