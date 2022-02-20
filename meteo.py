@@ -70,8 +70,9 @@ result = subprocess.run(['vcgencmd', 'measure_temp'], stdout=subprocess.PIPE)
 cpu_temp = round(float(result.stdout.decode('utf-8').split("=")[1].split("'")[0]), 1)
 print("CPU temperature:", cpu_temp)
 
-# result.stdout = 0.01,0.03,0.00
-result = subprocess.run("top -b | head -n 1 | awk '{print $12 $13 $14}'", shell=True, stdout=subprocess.PIPE)
+# top -b | head -n 1 -> top - 12:39:15 up 44 min,  1 user,  load average: 0.20, 0.84, 0.81
+# result.stdout = 0.03,0.56,0.71
+result = subprocess.run("top -b | head -n 1 | awk '{print $11 $12 $13}'", shell=True, stdout=subprocess.PIPE)
 la_1min, la_5min, la_15min = list(map(lambda x: round(float(x), 2), result.stdout.decode('utf-8').split(",")))
 print("Load average:", la_1min, la_5min, la_15min)
 
