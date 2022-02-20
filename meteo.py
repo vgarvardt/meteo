@@ -14,9 +14,9 @@ import sys
 ADAFRUIT_IO_USERNAME = os.environ.get('AIO_USERNAME') or sys.exit('AIO_USERNAME env var is not defined\n')
 ADAFRUIT_IO_KEY = os.environ.get('AIO_KEY') or sys.exit('AIO_KEY env var is not defined\n')
 
-MQTT_HOST = os.environ.get('MQTT_HOST') or sys.exit('MQTT_HOST env var is not defined\n')
-MQTT_PORT = int(os.environ.get('MQTT_PORT', 1883))
-MQTT_CLIENT_ID = os.environ.get('MQTT_HOST', 'bedroom-sense-hat')
+# MQTT_HOST = os.environ.get('MQTT_HOST') or sys.exit('MQTT_HOST env var is not defined\n')
+# MQTT_PORT = int(os.environ.get('MQTT_PORT', 1883))
+# MQTT_CLIENT_ID = os.environ.get('MQTT_HOST', 'bedroom-sense-hat')
 
 QOS_AT_MOST_ONCE = 0
 QOS_AT_LEAST_ONCE = 1
@@ -111,5 +111,5 @@ for topic, val in raw.items():
     )
 
 print("Publishing metrics to MQTT:", msgs)
-publish.multiple(msgs, hostname=MQTT_HOST, port=MQTT_PORT, client_id=MQTT_CLIENT_ID)
+# publish.multiple(msgs, hostname=MQTT_HOST, port=MQTT_PORT, client_id=MQTT_CLIENT_ID)
 print("All done!")
