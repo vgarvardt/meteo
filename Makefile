@@ -41,3 +41,10 @@ clean:
 	@if [ -d $(PROTOBUF_GO) ] ; then rm -rf $(PROTOBUF_GO) ; fi
 	@if [ -d $(PROTOBUF_PYTHON)/measurement ] ; then rm -rf $(PROTOBUF_PYTHON)/measurement ; fi
 .PHONY: clean
+
+python-container:
+	docker run -it --rm \
+        -v "$(CURDIR)/sense:/sense" \
+        -w "/sense" \
+        python:3.9 bash
+.PHONY: python-container

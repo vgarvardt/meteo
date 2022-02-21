@@ -102,9 +102,10 @@ def get_system():
     result.cpu_temperature = float(out.stdout.decode('utf-8').split("=")[1].split("'")[0])
 
     # top -b | head -n 1 -> top - 12:39:15 up 44 min,  1 user,  load average: 0.20, 0.84, 0.81
-    # out.stdout = 0.03,0.56,0.71
-    out = subprocess.run("top -b | head -n 1 | awk '{print $11 $12 $13}'", shell=True, stdout=subprocess.PIPE)
-    result.LA.min1, result.LA.min5, result.LA.min15 = list(map(lambda x: float(x), out.stdout.decode('utf-8').split(",")))
+    # top -b | head -n 1 -> top - 08:22:02 up 2 days, 19:17,  0 users,  load average: 0.53, 0.70, 0.74
+    out = subprocess.run("top -b | head -n 1", shell=True, stdout=subprocess.PIPE)
+    _, la_str = list(map(lambda s: s.strip(), out.stdout.decode('utf-8').split("average:")))
+    result.LA.min1, result.LA.min5, result.LA.min15 = list(map(lambda x: float(x), la_str.split(",")))
 
     # out.stdout = 971051 54910 797986 6471 118153 856424
     out = subprocess.run("free --kilo | grep Mem | awk '{print $2,$3,$4,$5,$6,$7}'", shell=True, stdout=subprocess.PIPE)
@@ -112,7 +113,7 @@ def get_system():
         map(int, out.stdout.decode('utf-8').split(" ")))
 
     # out.stdout = 7386872 1397124 5657820 20%
-    out = subprocess.run("df | grep root | awk '{print $2,$3,$4,$5}'", shell=True, stdout=subprocess.PIPE)
+    out = subprocess.run("df / | tail -n1 | awk '{print $2,$3,$4,$5}'", shell=True, stdout=subprocess.PIPE)
     result.Disk.total_kb, result.Disk.used_kb, result.Disk.available_kb, result.Disk.use_prct = list(
         map(lambda x: int(x.strip('%\n')), out.stdout.decode('utf-8').split(" ")))
 
