@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package measurement.v1;
+
+option go_package = "measurement/v1";
+
+message Climate {
+  float humidity = 1;
+  float pressure = 2;
+  float temperature_humidity = 3;
+  float temperature_pressure = 4;
+}
+
+message System {
+  message LA {
+    float min1 = 1;
+    float min5 = 2;
+    float min15 = 3;
+  }
+
+  message Memory {
+    int64 total_kb = 1;
+    int64 used_kb = 2;
+    int64 free_kb = 3;
+    int64 shared_kb = 4;
+    int64 cache_kb = 5;
+    int64 available_kb = 6;
+  }
+
+  message Disk {
+    int64 total_kb = 1;
+    int64 used_kb = 2;
+    int64 available_kb = 3;
+    int32 use_prct = 4;
+  }
+
+  float cpu_temperature = 1;
+  LA la = 2;
+  Memory memory = 3;
+  Disk disk = 4;
+}
