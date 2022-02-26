@@ -2,13 +2,22 @@ syntax = "proto3";
 
 package measurement.v1;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "measurement/v1";
 
+message Meta {
+  google.protobuf.Timestamp time = 1;
+  string measurement_id = 2;
+}
+
 message Climate {
-  float humidity = 1;
-  float pressure = 2;
-  float temperature_humidity = 3;
-  float temperature_pressure = 4;
+  Meta meta = 1;
+
+  float humidity = 2;
+  float pressure = 3;
+  float temperature_humidity = 4;
+  float temperature_pressure = 5;
 }
 
 message System {
@@ -34,8 +43,10 @@ message System {
     int32 use_prct = 4;
   }
 
-  float cpu_temperature = 1;
-  LA la = 2;
-  Memory memory = 3;
-  Disk disk = 4;
+  Meta meta = 1;
+
+  float cpu_temperature = 2;
+  LA la = 3;
+  Memory memory = 4;
+  Disk disk = 5;
 }

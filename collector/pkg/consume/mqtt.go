@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/eclipse/paho.mqtt.golang"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -12,7 +12,7 @@ import (
 type MQTTConfig struct {
 	Server       string `envconfig:"MQTT_HOST" default:"tcp://127.0.0.1:1883"`
 	ClientID     string `envconfig:"MQTT_CLIENT_ID" default:"meteo-collector"`
-	TopicSensors string `envconfig:"MQTT_TOPIC_SENSORS" default:"home/#"`
+	TopicSensors string `envconfig:"MQTT_TOPIC_SENSORS" default:"climate/#"`
 	TopicSystem  string `envconfig:"MQTT_TOPIC_SYSTEM" default:"sys/#"`
 
 	ConnectTimeout    time.Duration `envconfig:"MQTT_CONNECT_TIMEOUT" default:"3s"`

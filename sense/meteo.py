@@ -7,24 +7,22 @@ from datetime import datetime, timezone
 import paho.mqtt.publish as publish
 from Adafruit_IO import Client, Feed, RequestError
 from sense_hat import SenseHat
+from google.protobuf.timestamp_pb2 import Timestamp
 
-from measurement.v1.meteo_pb2 import Climate, System
+from measurement.v1.meteo_pb2 import Climate, System, Meta
 
 import sys
 
 ADAFRUIT_IO_USERNAME = os.environ.get('AIO_USERNAME') or sys.exit('AIO_USERNAME env var is not defined\n')
 ADAFRUIT_IO_KEY = os.environ.get('AIO_KEY') or sys.exit('AIO_KEY env var is not defined\n')
 
-# MQTT_HOST = os.environ.get('MQTT_HOST') or sys.exit('MQTT_HOST env var is not defined\n')
-# MQTT_PORT = int(os.environ.get('MQTT_PORT', 1883))
-# MQTT_CLIENT_ID = os.environ.get('MQTT_HOST', 'bedroom-sense-hat')
+MQTT_HOST = os.environ.get('MQTT_HOST', 'localhost')
+MQTT_PORT = int(os.environ.get('MQTT_PORT', 1883))
+MQTT_CLIENT_ID = os.environ.get('MQTT_HOST', 'bedroom-sense-hat')
 
 QOS_AT_MOST_ONCE = 0
 QOS_AT_LEAST_ONCE = 1
 QOS_EXACTLY_ONCE = 2
-
-now = datetime.now(timezone.utc).astimezone().isoformat()
-measurement_id = hashlib.sha256(now.encode('utf-8')).hexdigest()
 
 
 def get_or_create_feed(client, key, name, description=''):
@@ -43,13 +41,31 @@ def get_or_create_feed(client, key, name, description=''):
         return client.create_feed(feed)
 
 
-def get_climate(sense):
+def create_meta(now, measurement_id):
+    """
+    :param now: Timestamp
+    :param measurement_id: string
+    :return: Meta
+    """
+
+    result = Meta()
+
+    result.time = now
+    result.measurement_id = measurement_id
+
+    return result
+
+
+def get_climate(sense, now, measurement_id):
     """
     :param sense: SenseHat
+    :param now: Timestamp
+    :param measurement_id: string
     :return: Climate
     """
 
     result = Climate()
+    result.meta = create_meta(now, measurement_id)
 
     result.humidity = sense.get_humidity()
     result.pressure = sense.get_pressure()
@@ -90,12 +106,15 @@ def send_climate_to_ada(climate, client):
     aio.send_data(temp_feed.key, temp_avg, precision=1)
 
 
-def get_system():
+def get_system(now, measurement_id):
     """
+    :param now: Timestamp
+    :param measurement_id: string
     :return: System
     """
 
     result = System()
+    result.meta = create_meta(now, measurement_id)
 
     # out.stdout = b"temp=42.9'C\n"
     out = subprocess.run(['vcgencmd', 'measure_temp'], stdout=subprocess.PIPE)
@@ -120,30 +139,26 @@ def get_system():
     return result
 
 
-# raw = {
-#     "home/bedroom/climate": dict(humidity=humidity, pressure=pressure, temp_humidity=temp_humidity,
-#                                  temp_pressure=temp_pressure, temp_avg=temp_avg),
-#     "sys/bedroom/temperature": dict(cpu=cpu_temp),
-#     "sys/bedroom/la": dict(min1=la_1min, min5=la_5min, min15=la_15min),
-#     "sys/bedroom/mem": dict(total_kb=mem_total_kb, used_kb=mem_used_kb, free_kb=mem_free_kb, shared_kb=mem_shared_kb,
-#                             cache_kb=mem_cache_kb, available_kb=mem_available_kb),
-#     "sys/bedroom/disk": dict(total_kb=disk_total_kb, used_kb=disk_used_kb, available_kb=disk_available_kb,
-#                              use_prct=disk_use_prct),
-# }
-#
-# msgs = []
-# for topic, val in raw.items():
-#     msgs.append(dict(
-#         topic=topic,
-#         payload=json.dumps(dict(when=now, data=val, measurement_id=measurement_id)),
-#         qos=QOS_AT_LEAST_ONCE),
-#     )
-#
-# print("Publishing metrics to MQTT:", msgs)
-# # publish.multiple(msgs, hostname=MQTT_HOST, port=MQTT_PORT, client_id=MQTT_CLIENT_ID)
-# print("All done!")
+def publish_to_mqtt(climate, system):
+    """
+    :param climate: Climate
+    :param system: System
+    :return:
+    """
+    msgs = (
+        dict(topic='climate/bedroom', payload=climate.SerializeToString(), qos=QOS_AT_LEAST_ONCE),
+        dict(topic='sys/bedroom', payload=system.SerializeToString(), qos=QOS_AT_LEAST_ONCE),
+    )
+    print("Publishing metrics to MQTT:", msgs)
+    publish.multiple(msgs, hostname=MQTT_HOST, port=MQTT_PORT, client_id=MQTT_CLIENT_ID)
+    print("All done!")
+
 
 if __name__ == '__main__':
+    measurement_id = hashlib.sha256(datetime.now(timezone.utc).astimezone().isoformat().encode('utf-8')).hexdigest()
+    now = Timestamp()
+    now.GetCurrentTime()
+
     sense = SenseHat()
     sense.clear()
 

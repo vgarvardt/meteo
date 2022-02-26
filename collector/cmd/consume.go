@@ -38,12 +38,12 @@ func NewConsumeCmd() *cobra.Command {
 			}
 			defer mqttClient.Disconnect(uint(cfg.DisconnectTimeout / time.Millisecond))
 
-			if err := consume.StartConsumer(ctx, mqttClient, cfg.MQTTConfig.TopicSensors, logger); err != nil {
+			if err := consume.StartConsumer(mqttClient, cfg.MQTTConfig.TopicSensors, consume.NewHandlerClimate(ctx, logger)); err != nil {
 				logger.Error("Sensors consumer subscription finished with error", zap.Error(err))
 				return err
 			}
 
-			if err := consume.StartConsumer(ctx, mqttClient, cfg.MQTTConfig.TopicSystem, logger); err != nil {
+			if err := consume.StartConsumer(mqttClient, cfg.MQTTConfig.TopicSystem, consume.NewHandlerSystem(ctx, logger)); err != nil {
 				logger.Error("System consumer subscription finished with error", zap.Error(err))
 				return err
 			}
