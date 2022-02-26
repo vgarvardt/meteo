@@ -165,10 +165,10 @@ if __name__ == '__main__':
     # Create an instance of the REST client.
     aio = Client(ADAFRUIT_IO_USERNAME, ADAFRUIT_IO_KEY)
 
-    climate = get_climate(sense)
+    climate = get_climate(sense, now, measurement_id)
     send_climate_to_ada(climate, aio)
 
-    system = get_system()
+    system = get_system(now, measurement_id)
 
     cpu_temp = round(system.cpu_temperature, 1)
     print("CPU temperature:", cpu_temp)
