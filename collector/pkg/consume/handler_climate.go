@@ -28,6 +28,6 @@ func NewHandlerClimate(_ context.Context, logger *zap.Logger) mqtt.MessageHandle
 			return
 		}
 
-		ll.Debug("Decoded incoming message", zap.Any("msg", m))
+		ll.Debug("Decoded incoming message", zap.String("msg", m.String()))
 	}
 }
