@@ -183,3 +183,5 @@ if __name__ == '__main__':
     print("Disk:\n\ttotal: {0}kb\n\tused: {1}kb\n\tavailable: {2}kb\n\tuse: {3}%".format(
         system.Disk.total_kb, system.Disk.used_kb, system.Disk.available_kb, system.Disk.use_prct
     ))
+
+    publish_to_mqtt(climate, system)
