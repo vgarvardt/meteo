@@ -6,13 +6,13 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "measurement/v1";
 
-message Meta {
-  google.protobuf.Timestamp time = 1;
-  string measurement_id = 2;
+message Measurement {
+  string id = 1;
+  google.protobuf.Timestamp time = 2;
 }
 
 message Climate {
-  Meta meta = 1;
+  Measurement measurement = 1;
 
   float humidity = 2;
   float pressure = 3;
@@ -43,7 +43,7 @@ message System {
     int32 use_prct = 4;
   }
 
-  Meta meta = 1;
+  Measurement measurement = 1;
 
   float cpu_temperature = 2;
   LA la = 3;

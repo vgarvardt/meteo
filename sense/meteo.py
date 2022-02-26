@@ -10,7 +10,7 @@ from Adafruit_IO import Client, Feed, RequestError
 from sense_hat import SenseHat
 from google.protobuf.timestamp_pb2 import Timestamp
 
-from measurement.v1.meteo_pb2 import Climate, System, Meta
+from measurement.v1.meteo_pb2 import Climate, System, Measurement
 
 ADAFRUIT_IO_USERNAME = os.environ.get('AIO_USERNAME') or sys.exit('AIO_USERNAME env var is not defined\n')
 ADAFRUIT_IO_KEY = os.environ.get('AIO_KEY') or sys.exit('AIO_KEY env var is not defined\n')
@@ -40,19 +40,14 @@ def get_or_create_feed(client, key, name, description=''):
         return client.create_feed(feed)
 
 
-def create_meta(now, measurement_id):
+def create_measurement(now, id):
     """
     :param now: Timestamp
-    :param measurement_id: string
+    :param id: string
     :return: Meta
     """
 
-    result = Meta(
-        time=now,
-        measurement_id=measurement_id,
-    )
-
-    return result
+    return Measurement(time=now, id=id)
 
 
 def get_climate(sense, now, measurement_id):
@@ -64,7 +59,7 @@ def get_climate(sense, now, measurement_id):
     """
 
     result = Climate(
-        meta=create_meta(now, measurement_id),
+        measurement=create_measurement(now, measurement_id),
     )
 
     result.humidity = sense.get_humidity()
@@ -114,7 +109,7 @@ def get_system(now, measurement_id):
     """
 
     result = System(
-        meta=create_meta(now, measurement_id),
+        measurement=create_measurement(now, measurement_id),
     )
 
     # out.stdout = b"temp=42.9'C\n"
