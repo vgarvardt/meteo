@@ -2,6 +2,7 @@
 import hashlib
 import os
 import subprocess
+import sys
 from datetime import datetime, timezone
 
 import paho.mqtt.publish as publish
@@ -10,8 +11,6 @@ from sense_hat import SenseHat
 from google.protobuf.timestamp_pb2 import Timestamp
 
 from measurement.v1.meteo_pb2 import Climate, System, Meta
-
-import sys
 
 ADAFRUIT_IO_USERNAME = os.environ.get('AIO_USERNAME') or sys.exit('AIO_USERNAME env var is not defined\n')
 ADAFRUIT_IO_KEY = os.environ.get('AIO_KEY') or sys.exit('AIO_KEY env var is not defined\n')
@@ -48,10 +47,10 @@ def create_meta(now, measurement_id):
     :return: Meta
     """
 
-    result = Meta()
-
-    result.time = now
-    result.measurement_id = measurement_id
+    result = Meta(
+        time=now,
+        measurement_id=measurement_id,
+    )
 
     return result
 
@@ -64,8 +63,9 @@ def get_climate(sense, now, measurement_id):
     :return: Climate
     """
 
-    result = Climate()
-    result.meta = create_meta(now, measurement_id)
+    result = Climate(
+        meta=create_meta(now, measurement_id),
+    )
 
     result.humidity = sense.get_humidity()
     result.pressure = sense.get_pressure()
@@ -113,8 +113,9 @@ def get_system(now, measurement_id):
     :return: System
     """
 
-    result = System()
-    result.meta = create_meta(now, measurement_id)
+    result = System(
+        meta=create_meta(now, measurement_id),
+    )
 
     # out.stdout = b"temp=42.9'C\n"
     out = subprocess.run(['vcgencmd', 'measure_temp'], stdout=subprocess.PIPE)
