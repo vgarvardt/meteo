@@ -6,7 +6,7 @@ COPY . ./
 
 ARG VERSION=0.0.0-docker
 
-RUN make deps && make build
+RUN make build
 
 # ---
 
