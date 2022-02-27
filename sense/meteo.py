@@ -58,16 +58,13 @@ def get_climate(sense, now, measurement_id):
     :return: Climate
     """
 
-    result = Climate(
+    return Climate(
         measurement=create_measurement(now, measurement_id),
+        humidity=sense.get_humidity(),
+        pressure=sense.get_pressure(),
+        temperature_humidity=sense.get_temperature_from_humidity(),
+        temperature_pressure=sense.get_temperature_from_pressure(),
     )
-
-    result.humidity = sense.get_humidity()
-    result.pressure = sense.get_pressure()
-    result.temperature_humidity = sense.get_temperature_from_humidity()
-    result.temperature_pressure = sense.get_temperature_from_pressure()
-
-    return result
 
 
 def send_climate_to_ada(climate, client):
@@ -120,16 +117,19 @@ def get_system(now, measurement_id):
     # top -b | head -n 1 -> top - 08:22:02 up 2 days, 19:17,  0 users,  load average: 0.53, 0.70, 0.74
     out = subprocess.run("top -b | head -n 1", shell=True, stdout=subprocess.PIPE)
     _, la_str = list(map(lambda s: s.strip(), out.stdout.decode('utf-8').split("average:")))
-    result.LA.min1, result.LA.min5, result.LA.min15 = list(map(lambda x: float(x), la_str.split(",")))
+    result.la = result.LA()
+    result.la.min1, result.la.min5, result.la.min15 = list(map(lambda x: float(x), la_str.split(",")))
 
     # out.stdout = 971051 54910 797986 6471 118153 856424
     out = subprocess.run("free --kilo | grep Mem | awk '{print $2,$3,$4,$5,$6,$7}'", shell=True, stdout=subprocess.PIPE)
-    result.Memory.total_kb, result.Memory.used_kb, result.Memory.free_kb, result.Memory.shared_kb, result.Memory.cache_kb, result.Memory.available_kb = list(
+    result.memory = result.Memory()
+    result.memory.total_kb, result.memory.used_kb, result.memory.free_kb, result.memory.shared_kb, result.memory.cache_kb, result.memory.available_kb = list(
         map(int, out.stdout.decode('utf-8').split(" ")))
 
     # out.stdout = 7386872 1397124 5657820 20%
     out = subprocess.run("df / | tail -n1 | awk '{print $2,$3,$4,$5}'", shell=True, stdout=subprocess.PIPE)
-    result.Disk.total_kb, result.Disk.used_kb, result.Disk.available_kb, result.Disk.use_prct = list(
+    result.disk = result.Disk()
+    result.disk.total_kb, result.disk.used_kb, result.disk.available_kb, result.disk.use_prct = list(
         map(lambda x: int(x.strip('%\n')), out.stdout.decode('utf-8').split(" ")))
 
     return result
@@ -169,15 +169,15 @@ if __name__ == '__main__':
     cpu_temp = round(system.cpu_temperature, 1)
     print("CPU temperature:", cpu_temp)
 
-    la_1min, la_5min, la_15min = round(system.LA.min1, 2), round(system.LA.min5, 2), round(system.LA.min15, 2)
+    la_1min, la_5min, la_15min = round(system.la.min1, 2), round(system.la.min5, 2), round(system.la.min15, 2)
     print("Load average:", la_1min, la_5min, la_15min)
 
     print("Memory:\n\ttotal: {0}kb\n\tused: {1}kb\n\tfree: {2}kb\n\tshared: {3}kb\n\tcache: {4}kb\n\tavailable: {5}kb".format(
-        system.Memory.total_kb, system.Memory.used_kb, system.Memory.free_kb, system.Memory.shared_kb, system.Memory.cache_kb, system.Memory.available_kb
+        system.memory.total_kb, system.memory.used_kb, system.memory.free_kb, system.memory.shared_kb, system.memory.cache_kb, system.memory.available_kb
     ))
 
     print("Disk:\n\ttotal: {0}kb\n\tused: {1}kb\n\tavailable: {2}kb\n\tuse: {3}%".format(
-        system.Disk.total_kb, system.Disk.used_kb, system.Disk.available_kb, system.Disk.use_prct
+        system.disk.total_kb, system.disk.used_kb, system.disk.available_kb, system.disk.use_prct
     ))
 
     publish_to_mqtt(climate, system)
