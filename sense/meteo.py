@@ -117,18 +117,15 @@ def get_system(now, measurement_id):
     # top -b | head -n 1 -> top - 08:22:02 up 2 days, 19:17,  0 users,  load average: 0.53, 0.70, 0.74
     out = subprocess.run("top -b | head -n 1", shell=True, stdout=subprocess.PIPE)
     _, la_str = list(map(lambda s: s.strip(), out.stdout.decode('utf-8').split("average:")))
-    result.la = result.LA()
     result.la.min1, result.la.min5, result.la.min15 = list(map(lambda x: float(x), la_str.split(",")))
 
     # out.stdout = 971051 54910 797986 6471 118153 856424
     out = subprocess.run("free --kilo | grep Mem | awk '{print $2,$3,$4,$5,$6,$7}'", shell=True, stdout=subprocess.PIPE)
-    result.memory = result.Memory()
     result.memory.total_kb, result.memory.used_kb, result.memory.free_kb, result.memory.shared_kb, result.memory.cache_kb, result.memory.available_kb = list(
         map(int, out.stdout.decode('utf-8').split(" ")))
 
     # out.stdout = 7386872 1397124 5657820 20%
     out = subprocess.run("df / | tail -n1 | awk '{print $2,$3,$4,$5}'", shell=True, stdout=subprocess.PIPE)
-    result.disk = result.Disk()
     result.disk.total_kb, result.disk.used_kb, result.disk.available_kb, result.disk.use_prct = list(
         map(lambda x: int(x.strip('%\n')), out.stdout.decode('utf-8').split(" ")))
 
